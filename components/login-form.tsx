@@ -1,3 +1,4 @@
+"use client";
 import { MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -16,11 +17,31 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { FormEvent, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { redirect } from "next/navigation";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [error, setError] = useState('');
+  const onSubmitHandler = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    const currentTarget = e.currentTarget;
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email?.toString()!,
+      password: password?.toString()!
+    });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+  }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -35,7 +56,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={onSubmitHandler}>
             <FieldGroup>
               <Field>
                 <Button variant="outline" type="button">
@@ -55,6 +76,7 @@ export function LoginForm({
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
@@ -70,8 +92,11 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input name="password" id="password" type="password" required />
               </Field>
+              {error && <div className="text-xs text-red-600 text-center font-medium">
+                {error}
+              </div>}
               <Field>
                 <Button type="submit">Login</Button>
                 <FieldDescription className="text-center">

@@ -9,8 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { supabase } from "@/lib/supabase/client"
+import { useEffect } from "react"
 
 export function AppHeader() {
+  const handleLogout = async () => await supabase.auth.signOut();
   return (
     <header className="border-b shadow-sm">
       <div className="flex items-center justify-between px-6 py-2">
@@ -38,7 +41,7 @@ export function AppHeader() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer text-destructive">
-              <Link href="/login">Logout</Link>
+              <div onClick={handleLogout}>Logout</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

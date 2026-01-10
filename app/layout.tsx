@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
+import AuthListener from "@/components/auth-listener";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.className} antialiased`}>
       <body className="font-sans antialiased">
+        <AuthListener />
         {children}
       </body>
     </html>
