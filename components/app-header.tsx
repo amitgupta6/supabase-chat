@@ -15,10 +15,10 @@ export function AppHeader() {
     <header className="border-b shadow-sm">
       <div className="flex items-center justify-between px-6 py-2">
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <Link href="/chat" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <MessageSquare className="w-5 h-5 text-primary" />
           <span className="font-semibold text-lg">Supabase Chat</span>
-        </div>
+        </Link>
 
         {/* Profile Dropdown */}
         <DropdownMenu>
@@ -37,8 +37,8 @@ export function AppHeader() {
               <Link href="/settings/password">Password</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-destructive">
-              Logout
+            <DropdownMenuItem asChild className="cursor-pointer text-destructive">
+              <Link href="/login">Logout</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

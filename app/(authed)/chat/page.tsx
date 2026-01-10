@@ -94,8 +94,10 @@ export default function ChatPage() {
     <div className="flex h-full bg-background">
       {/* Left Sidebar - Chat List */}
       <div className="w-[350px] border-r border-border flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h1 className="text-xl font-semibold">Chats</h1>
+        <div className="p-4 border-b border-border flex items-center gap-3">
+          <div className="w-12 h-10 flex items-center justify-center flex-shrink-0">
+            <h1 className="text-xl font-semibold ml-4">Chats</h1>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -121,6 +123,9 @@ export default function ChatPage() {
             </div>
           ))}
         </div>
+
+        {/* Spacer to align with message input on the right */}
+        <div className="p-4 border-t border-border bg-background" style={{ height: '72px' }}></div>
       </div>
 
       {/* Right Side - Chat Messages */}

@@ -1,3 +1,4 @@
+import { MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -18,6 +19,10 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   return (
     <Card {...props}>
       <CardHeader>
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <span className="font-semibold text-lg">Supabase Chat</span>
+        </div>
         <CardTitle>Create an account</CardTitle>
         <CardDescription>
           Enter your information below to create your account
