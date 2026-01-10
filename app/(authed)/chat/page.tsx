@@ -91,7 +91,7 @@ export default function ChatPage() {
   }, {})
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-full bg-background">
       {/* Left Sidebar - Chat List */}
       <div className="w-[350px] border-r border-border flex flex-col">
         <div className="p-4 border-b border-border">
