@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { User, Send } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase/client"
+import { Database } from "@/types/database"
 
 type Message = {
   id: number
@@ -80,6 +82,8 @@ function formatDate(dateString: string): string {
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState<Chat>(mockChats[0])
   const [messageInput, setMessageInput] = useState("")
+  const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null);
 
   const groupedMessages = selectedChat.messages.reduce((groups: { [key: string]: Message[] }, message) => {
     const date = message.date
@@ -89,6 +93,20 @@ export default function ChatPage() {
     groups[date].push(message)
     return groups
   }, {})
+
+  const loadUsers = async () => {
+    const { data: profiles, error } = await supabase.from("profiles").select();
+    if(error){
+      console.log("error fetching profiles", error);
+      return;
+    }
+    console.log("profiles", profiles);
+    setProfiles(profiles);
+  }
+
+  useEffect(() => {
+    loadUsers();
+  },[])
 
   return (
     <div className="flex h-full bg-background">
@@ -101,13 +119,13 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {mockChats.map((chat) => (
+          {profiles.map((profile) => (
             <div
-              key={chat.id}
-              onClick={() => setSelectedChat(chat)}
+              key={profile.id}
+              onClick={() => setSelectedProfile(profile)}
               className={cn(
                 "flex items-start gap-3 p-4 cursor-pointer hover:bg-accent transition-colors border-b border-border",
-                selectedChat.id === chat.id && "bg-accent"
+                selectedProfile?.id === profile.id && "bg-accent"
               )}
             >
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
@@ -115,10 +133,10 @@ export default function ChatPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="font-semibold text-sm">{chat.name}</h3>
-                  <span className="text-xs text-muted-foreground">{chat.time}</span>
+                  <h3 className="font-semibold text-sm">{profile.name}</h3>
+                  <span className="text-xs text-muted-foreground">11:22PM</span>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
+                <p className="text-sm text-muted-foreground truncate">Last message</p>
               </div>
             </div>
           ))}
