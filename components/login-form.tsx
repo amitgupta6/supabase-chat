@@ -41,6 +41,7 @@ export function LoginForm({
       setError(error.message);
       return;
     }
+    redirect("/chat");
   }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

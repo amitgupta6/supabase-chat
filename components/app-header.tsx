@@ -10,10 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase/client"
-import { useEffect } from "react"
+import { redirect } from "next/navigation";
 
 export function AppHeader() {
-  const handleLogout = async () => await supabase.auth.signOut();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    redirect("/login");
+  }
   return (
     <header className="border-b shadow-sm">
       <div className="flex items-center justify-between px-6 py-2">
