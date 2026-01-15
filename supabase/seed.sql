@@ -83,6 +83,7 @@ INSERT INTO public.profiles(
         auth.users
 );
 
+-- Chat between user1 and user 2
 INSERT INTO public.messages(
     sender_id,
     recipient_id,
@@ -91,4 +92,45 @@ INSERT INTO public.messages(
     (select id from auth.users where email = 'user1@example.com'),
     (select id from auth.users where email = 'user2@example.com'),
     'Hello'
-)
+);
+
+INSERT INTO public.messages(
+    sender_id,
+    recipient_id,
+    message
+) VALUES (
+    (select id from auth.users where email = 'user2@example.com'),
+    (select id from auth.users where email = 'user1@example.com'),
+    'How are you?'
+);
+
+INSERT INTO public.messages(
+    sender_id,
+    recipient_id,
+    message
+) VALUES (
+    (select id from auth.users where email = 'user1@example.com'),
+    (select id from auth.users where email = 'user2@example.com'),
+    'I am fine. How are you?'
+);
+
+INSERT INTO public.messages(
+    sender_id,
+    recipient_id,
+    message
+) VALUES (
+    (select id from auth.users where email = 'user2@example.com'),
+    (select id from auth.users where email = 'user1@example.com'),
+    'I am alright too. Thanks.'
+);
+
+-- Chat between user 1 and user 3
+INSERT INTO public.messages(
+    sender_id,
+    recipient_id,
+    message
+) VALUES (
+    (select id from auth.users where email = 'user3@example.com'),
+    (select id from auth.users where email = 'user1@example.com'),
+    'Hello'
+);

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
 import { Database } from "@/types/database"
+import { type User as UserType } from "@supabase/supabase-js";
 
 type Message = {
   id: number
@@ -79,14 +80,43 @@ function formatDate(dateString: string): string {
   }
 }
 
+function formatTime(dateIso: string): string {
+  const d = new Date(dateIso);
+
+  let hours = d.getHours(); // 0-23
+  const minutes = d.getMinutes();
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+
+  const mm = String(minutes).padStart(2, "0");
+
+  return `${hours}:${mm}${ampm}`;
+}
+
+
+type ChatMessage = Database["public"]["Tables"]["messages"]["Row"];
+
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState<Chat>(mockChats[0])
   const [messageInput, setMessageInput] = useState("")
   const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([]);
   const [selectedProfile, setSelectedProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [user, setUser] = useState<UserType | null>(null);
 
-  const groupedMessages = selectedChat.messages.reduce((groups: { [key: string]: Message[] }, message) => {
-    const date = message.date
+  const loadUser = async () => {
+    const { data: { user }, error: userRetrievalError } = await supabase.auth.getUser();
+    setUser(user);
+  }
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const groupedMessages = messages.reduce((groups: { [key: string]: ChatMessage[] }, message) => {
+    const date = message.created_at.split("T")[0];
     if (!groups[date]) {
       groups[date] = []
     }
@@ -96,7 +126,7 @@ export default function ChatPage() {
 
   const loadUsers = async () => {
     const { data: profiles, error } = await supabase.from("profiles").select();
-    if(error){
+    if (error) {
       console.log("error fetching profiles", error);
       return;
     }
@@ -104,9 +134,37 @@ export default function ChatPage() {
     setProfiles(profiles);
   }
 
+  const loadMessages = async (user_id: string) => {
+    // const { data: { user }, error: userRetrievalError } = await supabase.auth.getUser();
+    // if (userRetrievalError) {
+    //   console.log("loadMessages - failed to retrieve user", userRetrievalError);
+    //   return;
+    // }
+
+    const { data: messages, error } = await supabase.from("messages").select().or(
+      `and(sender_id.eq.${user?.id},recipient_id.eq.${user_id}), and(sender_id.eq.${user_id},recipient_id.eq.${user?.id})`
+    )
+    if (error) {
+      console.log("error fetching messages", error);
+      return;
+    }
+    console.log("messages", messages);
+    setMessages(messages);
+  }
+
   useEffect(() => {
     loadUsers();
-  },[])
+  }, []);
+
+  useEffect(() => {
+    if (selectedProfile?.id && user) {
+      loadMessages(selectedProfile?.id);
+    }
+  }, [selectedProfile, user]);
+
+  const handleMessageInput = () => {
+    setMessageInput("");
+  }
 
   return (
     <div className="flex h-full bg-background">
@@ -175,25 +233,25 @@ export default function ChatPage() {
                   key={message.id}
                   className={cn(
                     "flex mb-2",
-                    message.isSent ? "justify-end" : "justify-start"
+                    message.sender_id == user?.id ? "justify-end" : "justify-start"
                   )}
                 >
                   <div
                     className={cn(
                       "max-w-[70%] rounded-lg px-4 py-2",
-                      message.isSent
+                      message.sender_id == user?.id
                         ? "bg-primary text-primary-foreground"
                         : "bg-background border border-border"
                     )}
                   >
-                    <p className="text-sm break-words">{message.text}</p>
+                    <p className="text-sm break-words">{message.message}</p>
                     <span
                       className={cn(
                         "text-xs mt-1 block text-right",
-                        message.isSent ? "text-primary-foreground/70" : "text-muted-foreground"
+                        message.sender_id == user?.id ? "text-primary-foreground/70" : "text-muted-foreground"
                       )}
                     >
-                      {message.time}
+                      {formatTime(message.created_at)}
                     </span>
                   </div>
                 </div>
@@ -211,12 +269,13 @@ export default function ChatPage() {
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && messageInput.trim()) {
-                  setMessageInput("")
+                  // setMessageInput("")
+                  handleMessageInput();
                 }
               }}
               className="flex-1"
             />
-            <Button size="icon">
+            <Button size="icon" onClick={handleMessageInput}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
