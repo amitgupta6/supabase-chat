@@ -81,4 +81,14 @@ INSERT INTO public.profiles(
         ''
     from 
         auth.users
+);
+
+INSERT INTO public.messages(
+    sender_id,
+    recipient_id,
+    message
+) VALUES (
+    (select id from auth.users where email = 'user1@example.com'),
+    (select id from auth.users where email = 'user2@example.com'),
+    'Hello'
 )

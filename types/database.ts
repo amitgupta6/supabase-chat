@@ -34,6 +34,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      messages: {
+        Row: {
+          created_at: string
+          id: number
+          message: string | null
+          recipient_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
