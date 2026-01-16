@@ -167,6 +167,7 @@ export default function ChatPage() {
 
   const handleMessageInput = async () => {
     if(messageInput == "") return;
+    if(!selectedProfile) return;
     const {data, error} = await supabase.from("messages").insert({
       message: messageInput,
       sender_id: user?.id,
@@ -207,9 +208,14 @@ export default function ChatPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
                   <h3 className="font-semibold text-sm">{profile.name}</h3>
-                  <span className="text-xs text-muted-foreground">11:22PM</span>
+                  <span className="text-xs text-muted-foreground">
+                    {/* Formatted time */}
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">Last message</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {/* Last Message */}
+                  Signed up <span className="lowercase">{formatDate(profile.created_at)}</span>
+                </p>
               </div>
             </div>
           ))}
