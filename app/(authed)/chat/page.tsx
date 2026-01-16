@@ -134,7 +134,7 @@ export default function ChatPage() {
     setProfiles(profiles);
   }
 
-  const loadMessages = async (user_id: string) => {
+  const loadMessages = async () => {
     // const { data: { user }, error: userRetrievalError } = await supabase.auth.getUser();
     // if (userRetrievalError) {
     //   console.log("loadMessages - failed to retrieve user", userRetrievalError);
@@ -142,7 +142,7 @@ export default function ChatPage() {
     // }
 
     const { data: messages, error } = await supabase.from("messages").select().or(
-      `and(sender_id.eq.${user?.id},recipient_id.eq.${user_id}), and(sender_id.eq.${user_id},recipient_id.eq.${user?.id})`
+      `and(sender_id.eq.${user?.id},recipient_id.eq.${selectedProfile?.id}), and(sender_id.eq.${selectedProfile?.id},recipient_id.eq.${user?.id})`
     )
     if (error) {
       console.log("error fetching messages", error);
@@ -158,11 +158,23 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (selectedProfile?.id && user) {
-      loadMessages(selectedProfile?.id);
+      loadMessages();
     }
   }, [selectedProfile, user]);
 
-  const handleMessageInput = () => {
+  const handleMessageInput = async () => {
+    if(messageInput == "") return;
+    const {data, error} = await supabase.from("messages").insert({
+      message: messageInput,
+      sender_id: user?.id,
+      recipient_id: selectedProfile?.id
+    });
+    if(error){
+      console.log("error inserting message", error);
+      return;
+    }
+    console.log("message inserted", data);
+    loadMessages();
     setMessageInput("");
   }
 
