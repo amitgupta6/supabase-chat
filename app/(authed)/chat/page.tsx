@@ -132,6 +132,9 @@ export default function ChatPage() {
     }
     console.log("profiles", profiles);
     setProfiles(profiles);
+    if(!selectedProfile){
+      setSelectedProfile(profiles[0]);
+    }
   }
 
   const loadMessages = async () => {
