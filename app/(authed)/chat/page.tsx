@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { User, Send } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
 import { Database } from "@/types/database"
-import { type User as UserType } from "@supabase/supabase-js";
+import { RealtimeChannel, type User as UserType } from "@supabase/supabase-js";
 
 type Message = {
   id: number
@@ -106,6 +106,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [user, setUser] = useState<UserType | null>(null);
 
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
   const loadUser = async () => {
     const { data: { user }, error: userRetrievalError } = await supabase.auth.getUser();
     setUser(user);
@@ -130,9 +133,8 @@ export default function ChatPage() {
       console.log("error fetching profiles", error);
       return;
     }
-    console.log("profiles", profiles);
     setProfiles(profiles);
-    if(!selectedProfile){
+    if (!selectedProfile) {
       setSelectedProfile(profiles[0]);
     }
   }
@@ -151,9 +153,13 @@ export default function ChatPage() {
       console.log("error fetching messages", error);
       return;
     }
-    console.log("messages", messages);
+    // console.log("messages", messages);
     setMessages(messages);
   }
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length]);
 
   useEffect(() => {
     loadUsers();
@@ -163,24 +169,61 @@ export default function ChatPage() {
     if (selectedProfile?.id && user) {
       loadMessages();
     }
-  }, [selectedProfile, user]);
+    if (!selectedProfile?.id) {
+      return;
+    }
+    const channelName = `chat:${[selectedProfile.id, user?.id].sort().join("|")}:messages`;
+    console.log(channelName);
+    // console.log("channelName", channelName)
+    channelRef?.current?.unsubscribe();
+    const ch = supabase.channel(channelName, { config: { private: true } });
+    ch.on("broadcast", { event: "send_message" }, (payload: { payload: any }) => {
+      console.log("message received", payload);
+      loadMessages();
+    }).subscribe();
+    channelRef.current = ch;
+    return () => {
+      ch.unsubscribe();
+      // channelRef.current = null;
+      if (ch == channelRef.current) channelRef.current = null;
+    }
+  }, [selectedProfile?.id, user?.id]);
 
   const handleMessageInput = async () => {
-    if(messageInput == "") return;
-    if(!selectedProfile) return;
-    const {data, error} = await supabase.from("messages").insert({
+    if (messageInput == "") return;
+    if (!selectedProfile) return;
+    const { data, error } = await supabase.from("messages").insert({
       message: messageInput,
       sender_id: user?.id,
       recipient_id: selectedProfile?.id
     });
-    if(error){
+    if (error) {
       console.log("error inserting message", error);
       return;
     }
     console.log("message inserted", data);
     loadMessages();
     setMessageInput("");
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'send_message',
+        payload: {
+          message: messageInput
+        }
+      })
+    }
   }
+
+  useEffect(() => {
+    //Hacking chat between user1 and user2
+    console.log("subscribign to chat between user1 and user2");
+    const channelName = `chat:11958a04-a25f-419a-82e6-9c21523fbc06|bca8f500-6a06-4480-8658-e8686043098f:messages`;
+    const channel = supabase.channel(channelName, {config: {private: true}});
+    channel.on("broadcast", { event: "send_message" }, (payload: { payload: any }) => {
+      console.log("user1 and user 2 chat", payload);
+    }).subscribe();
+  },[])
 
   return (
     <div className="flex h-full bg-background">
@@ -279,6 +322,7 @@ export default function ChatPage() {
               ))}
             </div>
           ))}
+          <div ref={bottomRef} />
         </div>
 
         {/* Message Input */}
