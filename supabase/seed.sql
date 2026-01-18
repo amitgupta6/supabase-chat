@@ -70,30 +70,6 @@ INSERT INTO
             auth.users
     );
 
-INSERT INTO public.profiles(
-    id,
-    name,
-    bio
-) (
-    select
-        id,
-        email,
-        ''
-    from 
-        auth.users
-);
-
--- Chat between user1 and user 2
-INSERT INTO public.messages(
-    sender_id,
-    recipient_id,
-    message
-) VALUES (
-    (select id from auth.users where email = 'user1@example.com'),
-    (select id from auth.users where email = 'user2@example.com'),
-    'Hello'
-);
-
 INSERT INTO public.messages(
     sender_id,
     recipient_id,
