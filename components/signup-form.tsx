@@ -28,44 +28,48 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     e.preventDefault();
     const currentTarget = e.currentTarget;
     const formData = new FormData(currentTarget);
+    const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
     const confirm_password = formData.get("confirm_password");
     setError("");
     setSuccess("");
-    if(email == ""){
+    if (email == "") {
       setError("Please provide email address");
       return;
     }
-    if(password == ""){
+    if (password == "") {
       setError("Enter password");
       return;
     }
-    if(password?.toString().length! < 8){
+    if (password?.toString().length! < 8) {
       setError(`Password should be of minimum 8 characters`);
       return;
     }
-    if(password != confirm_password){
+    if (password != confirm_password) {
       setError(`Password and confirm password do not match`);
       return;
     }
-    const {data, error} = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email?.toString()!,
       password: password?.toString()!,
       options: {
-        emailRedirectTo: `${location.origin}/chat`
+        emailRedirectTo: `${location.origin}/chat`,
+        data: {
+          name
+        }
       }
     });
-    if(error){
+    if (error) {
       setError(error.message);
       return;
     }
-    if(data.user?.confirmation_sent_at){
+    if (data.user?.confirmation_sent_at) {
       setError('')
       setSuccess(`Signup Successful. Confirmation email sent. Please check your inbox.`);
       return;
     }
-    console.log("error" ,error);
+    console.log("error", error);
     console.log("data", data);
   }
   return (
@@ -83,6 +87,17 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       {!success && <CardContent>
         <form onSubmit={onSubmitHandler}>
           <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input
+                id="name"
+                name="name"
+                type="name"
+                placeholder="John Doe"
+                required
+                disabled={loading}
+              />
+            </Field>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
