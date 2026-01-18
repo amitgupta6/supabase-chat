@@ -53,7 +53,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       email: email?.toString()!,
       password: password?.toString()!,
       options: {
-        emailRedirectTo: `http://localhost:3000/chat`
+        emailRedirectTo: `${location.origin}/chat`
       }
     });
     if(error){
