@@ -1,5 +1,4 @@
 set check_function_bodies = off;
-
 CREATE OR REPLACE FUNCTION public.get_profiles_with_last_message(user_id uuid)
  RETURNS TABLE(profile_id uuid, profile_name text, profile_bio text, profile_created_at timestamp with time zone, profile_avatar text, message_id bigint, message_sender_id uuid, message_recipient_id uuid, message_created_at timestamp with time zone, message text)
  LANGUAGE sql
