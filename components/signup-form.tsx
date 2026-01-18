@@ -49,7 +49,6 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       setError(`Password and confirm password do not match`);
       return;
     }
-    console.log("Origin is", location.origin);
     const {data, error} = await supabase.auth.signUp({
       email: email?.toString()!,
       password: password?.toString()!,
