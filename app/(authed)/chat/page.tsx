@@ -101,8 +101,8 @@ type ChatMessage = Database["public"]["Tables"]["messages"]["Row"];
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState<Chat>(mockChats[0])
   const [messageInput, setMessageInput] = useState("")
-  const [profiles, setProfiles] = useState<Database["public"]["Tables"]["profiles"]["Row"][]>([]);
-  const [selectedProfile, setSelectedProfile] = useState<Database["public"]["Tables"]["profiles"]["Row"] | null>(null);
+  const [profiles, setProfiles] = useState<Database["public"]["Functions"]["get_profiles_with_last_message"]["Returns"] | null>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Database["public"]["Functions"]["get_profiles_with_last_message"]["Returns"][number] | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [user, setUser] = useState<UserType | null>(null);
 
@@ -127,17 +127,17 @@ export default function ChatPage() {
     return groups
   }, {})
 
-  const loadUsers = async () => {
-    const { data: profiles, error } = await supabase.from("profiles").select();
-    if (error) {
-      console.log("error fetching profiles", error);
-      return;
-    }
-    setProfiles(profiles);
-    if (!selectedProfile) {
-      setSelectedProfile(profiles[0]);
-    }
-  }
+  // const loadUsers = async () => {
+  //   const { data: profiles, error } = await supabase.from("profiles").select();
+  //   if (error) {
+  //     console.log("error fetching profiles", error);
+  //     return;
+  //   }
+  //   setProfiles(profiles);
+  //   if (!selectedProfile) {
+  //     setSelectedProfile(profiles[0]);
+  //   }
+  // }
 
   const loadMessages = async () => {
     // const { data: { user }, error: userRetrievalError } = await supabase.auth.getUser();
@@ -147,7 +147,7 @@ export default function ChatPage() {
     // }
 
     const { data: messages, error } = await supabase.from("messages").select().or(
-      `and(sender_id.eq.${user?.id},recipient_id.eq.${selectedProfile?.id}), and(sender_id.eq.${selectedProfile?.id},recipient_id.eq.${user?.id})`
+      `and(sender_id.eq.${user?.id},recipient_id.eq.${selectedProfile?.profile_id}), and(sender_id.eq.${selectedProfile?.profile_id},recipient_id.eq.${user?.id})`
     )
     if (error) {
       console.log("error fetching messages", error);
@@ -161,18 +161,18 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  // useEffect(() => {
+  //   loadUsers();
+  // }, []);
 
   useEffect(() => {
-    if (selectedProfile?.id && user) {
+    if (selectedProfile?.profile_id && user) {
       loadMessages();
     }
-    if (!selectedProfile?.id) {
+    if (!selectedProfile?.profile_id) {
       return;
     }
-    const channelName = `chat:${[selectedProfile.id, user?.id].sort().join("|")}:messages`;
+    const channelName = `chat:${[selectedProfile.profile_id, user?.id].sort().join("|")}:messages`;
     console.log(channelName);
     // console.log("channelName", channelName)
     channelRef?.current?.unsubscribe();
@@ -187,7 +187,7 @@ export default function ChatPage() {
       // channelRef.current = null;
       if (ch == channelRef.current) channelRef.current = null;
     }
-  }, [selectedProfile?.id, user?.id]);
+  }, [selectedProfile?.profile_id, user?.id]);
 
   const handleMessageInput = async () => {
     if (messageInput == "") return;
@@ -195,7 +195,7 @@ export default function ChatPage() {
     const { data, error } = await supabase.from("messages").insert({
       message: messageInput,
       sender_id: user?.id,
-      recipient_id: selectedProfile?.id
+      recipient_id: selectedProfile?.profile_id
     });
     if (error) {
       console.log("error inserting message", error);
@@ -203,6 +203,7 @@ export default function ChatPage() {
     }
     console.log("message inserted", data);
     loadMessages();
+    loadProfiles();
     setMessageInput("");
     if (channelRef.current) {
       channelRef.current.send({
@@ -219,11 +220,21 @@ export default function ChatPage() {
     //Hacking chat between user1 and user2
     console.log("subscribign to chat between user1 and user2");
     const channelName = `chat:11958a04-a25f-419a-82e6-9c21523fbc06|bca8f500-6a06-4480-8658-e8686043098f:messages`;
-    const channel = supabase.channel(channelName, {config: {private: true}});
+    const channel = supabase.channel(channelName, { config: { private: true } });
     channel.on("broadcast", { event: "send_message" }, (payload: { payload: any }) => {
       console.log("user1 and user 2 chat", payload);
     }).subscribe();
-  },[])
+  }, []);
+
+  const loadProfiles = async () => {
+    if(!user?.id) return;
+    const { data: profiles, error } = await supabase.rpc("get_profiles_with_last_message", {user_id: user?.id});
+    setProfiles(profiles);
+  }
+
+  useEffect(() => {
+    loadProfiles();
+  }, [user?.id]);
 
   return (
     <div className="flex h-full bg-background">
@@ -236,13 +247,13 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {profiles.map((profile) => (
+          {profiles?.map((profile) => (
             <div
-              key={profile.id}
+              key={profile.profile_id}
               onClick={() => setSelectedProfile(profile)}
               className={cn(
                 "flex items-start gap-3 p-4 cursor-pointer hover:bg-accent transition-colors border-b border-border",
-                selectedProfile?.id === profile.id && "bg-accent"
+                selectedProfile?.profile_id === profile.profile_id && "bg-accent"
               )}
             >
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
@@ -250,14 +261,16 @@ export default function ChatPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="font-semibold text-sm">{profile.name}</h3>
+                  <h3 className="font-semibold text-sm">{profile.profile_name}</h3>
                   <span className="text-xs text-muted-foreground">
                     {/* Formatted time */}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground truncate">
                   {/* Last Message */}
-                  Signed up <span className="lowercase">{formatDate(profile.created_at)}</span>
+                  {/* Signed up <span className="lowercase">{formatDate(profile)}</span> */}
+                  {profile.message && <span>{profile.message}</span>}
+                  {!profile.message && <span className="italic">No recent messages</span>}
                 </p>
               </div>
             </div>
@@ -276,7 +289,7 @@ export default function ChatPage() {
             <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
               <User className="w-5 h-5 text-muted-foreground" />
             </div>
-            <h2 className="font-semibold">{selectedProfile?.name}</h2>
+            <h2 className="font-semibold">{selectedProfile?.profile_name}</h2>
           </div>
         </div>
 

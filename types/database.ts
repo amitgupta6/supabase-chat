@@ -87,7 +87,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_profiles_with_last_message: {
+        Args: { user_id: string }
+        Returns: {
+          message: string
+          message_created_at: string
+          message_id: number
+          message_recipient_id: string
+          message_sender_id: string
+          profile_avatar: string
+          profile_bio: string
+          profile_created_at: string
+          profile_id: string
+          profile_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
