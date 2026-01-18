@@ -11,12 +11,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase/client"
 import { redirect } from "next/navigation";
+import { useEffect, useState } from "react"
 
 export function AppHeader() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     redirect("/login");
   }
+  const [name, setName] = useState<string | null | undefined>(null);
+  const loadProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return;
+    const { data: profiles } = await supabase.from("profiles").select().eq('id', user?.id);
+    setName(profiles?.[0].name)
+  }
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
   return (
     <header className="border-b shadow-sm">
       <div className="flex items-center justify-between px-6 py-2">
@@ -32,7 +44,7 @@ export function AppHeader() {
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
               <User className="w-4 h-4 text-muted-foreground" />
             </div>
-            <span className="text-sm font-medium">John Doe</span>
+            <span className="text-sm font-medium capitalize">{name}</span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
