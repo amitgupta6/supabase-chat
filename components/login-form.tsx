@@ -44,6 +44,7 @@ export function LoginForm({
     redirect("/chat");
   }
   const handleGoogleLogin = async () => {
+    console.log(`Location origin is ${location.origin}`);
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
