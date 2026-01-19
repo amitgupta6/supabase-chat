@@ -40,7 +40,7 @@ INSERT INTO
             '',
             ''
         FROM
-            generate_series(1, 10)
+            generate_series(1, 5)
     );
 
 -- test user email identities
